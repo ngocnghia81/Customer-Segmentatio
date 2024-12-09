@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Segmentation - Phân Nhóm Khách Hàng</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #fdb1b1;
+    }
+
+    h1 {
+      text-align: center;
+      margin-top: 50px;
+      font-size: 36px;
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: #f8f1f1;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      margin-top: 50px;
+      width: 50%;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    label {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    input[type="file"], select {
+      border: 2px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 18px;
+      width: 100%;
+      margin-bottom: 20px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    button[type="submit"] {
+      background-color: #4CAF50;
+      color: #fff;
+      font-size: 18px;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #3e8e41;
+    }
+
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-top-color: #333;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s infinite linear;
+      margin: 0 auto;
+      margin-top: 50px;
+      display: none;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .results {
+      margin-top: 50px;
+      text-align: center;
+    }
+
+    .result-img {
+      width: 30%;
+      margin: 10px;
+      border-radius: 5px;
+    }
+
+    .result-text {
+      font-size: 18px;
+      margin-top: 20px;
+      color: #333;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .cluster {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 10px;
+      background-color: #fff;
+      border-radius: 5px;
+      margin: 10px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Phân Nhóm Khách Hàng - WebApp</h1>
+
+
+  <form id="upload-form" onsubmit="handleSubmit(event)">
+    <label for="file-upload">Tải lên file CSV:</label>
+    <input type="file" id="file-upload" required>
+
+    <label for="method">Chọn phương pháp phân nhóm:</label>
+    <select id="method" required>
+      <option value="optimal">Tối ưu nhất</option>
+      <option value="elbow">Phương pháp Elbow</option>
+      <option value="silhouette">Phương pháp Silhouette</option>
+        <option value="model1">Mô Hình Huấn Luyện 1</option>
+      <option value="model2">Mô Hình Huấn Luyện 2</option>
+        <option value="custom">Tự chọn nhóm</option>
+    </select>
+     <label for="custom-clusters" id="custom-clusters-label" style="display: none;">Số lượng nhóm:</label>
+<input type="number" id="custom-clusters" name="custom-clusters" placeholder="Nhập số lượng nhóm muốn phân" min="2"
+       max="10"
+       style="display: none;">
+
+    <button type="submit">Gửi</button>
+  </form>
+  <div id="spinner" class="spinner"></div>
+  <div id="results" class="results"></div>
+  <script>
+
+      document.getElementById('method').addEventListener('change', function() {
+    var method = this.value;
+    var customClustersInput = document.getElementById('custom-clusters');
+    var customClustersLabel = document.getElementById('custom-clusters-label');
+
+    if (method === 'custom') {
+        // Hiển thị input số nhóm khi chọn 'Tự chọn nhóm'
+        customClustersInput.style.display = 'block';
+        customClustersLabel.style.display = 'block';
+    } else {
+        // Ẩn input số nhóm khi không chọn 'Tự chọn nhóm'
+        customClustersInput.style.display = 'none';
+        customClustersLabel.style.display = 'none';
+    }
+});
+
+    function handleSubmit(event) {
+  event.preventDefault(); // Prevent the form from submitting normally
+
+  var file = document.getElementById("file-upload").files[0];
+  var method = document.getElementById("method").value; // Get selected method
+  var formData = new FormData();
+  formData.append("file", file);
+  formData.append("method", method);
+
+  if (method === "custom") {
+    var customClusters = document.getElementById("custom-clusters").value; // Lấy số nhóm người dùng nhập
+    formData.append("custom-clusters", customClusters);
+  }
+
+
+  var spinner = document.getElementById("spinner");
+  spinner.style.display = "block";
+document.getElementById("results").innerHTML = ""; // Clear results area
+
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "/predict");
+  xhr.send(formData);
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      document.getElementById("results").innerHTML = "";
+
+      var response = JSON.parse(xhr.responseText);
+
+      var imagesDiv = document.createElement("div");
+      imagesDiv.className = "container";
+
+      // Show method-specific images (Elbow, Silhouette, or Model)
+      if (method === "elbow") {
+        var elbowImg = document.createElement("img");
+        elbowImg.src = response.cluster_img;
+        elbowImg.className = "result-img";
+        imagesDiv.appendChild(elbowImg);
+
+        // Description for Elbow
+        var elbowDescription = document.createElement("p");
+        elbowDescription.className = "result-text";
+        elbowDescription.textContent = response.cluster_description;
+        imagesDiv.appendChild(elbowDescription);
+      } else if (method === "silhouette") {
+        var silhouetteImg = document.createElement("img");
+        silhouetteImg.src = response.cluster_img;
+            silhouetteImg.className = "result-img";
+        imagesDiv.appendChild(silhouetteImg);
+
+        // Description for Silhouette
+        var silhouetteDescription = document.createElement("p");
+        silhouetteDescription.className = "result-text";
+        silhouetteDescription.textContent = response.cluster_description;
+        imagesDiv.appendChild(silhouetteDescription);
+      }else if (method === "optimal") {
+          var optimalImg = document.createElement("img");
+          optimalImg.src = response.cluster_img; // Image for the optimal method
+          optimalImg.className = "result-img";
+          imagesDiv.appendChild(optimalImg);
+
+          // Description for Optimal
+          var optimalDescription = document.createElement("p");
+          optimalDescription.className = "result-text";
+          optimalDescription.textContent = response.cluster_description;
+          imagesDiv.appendChild(optimalDescription);
+      }
+      else if (method.includes("model")) { // Use includes() instead of contain
+            // Handle model selection
+            var modelDescription = document.createElement("p");
+            modelDescription.className = "result-text";
+            modelDescription.textContent = response.cluster_description;
+            imagesDiv.appendChild(modelDescription);
+
+            if (!response.cluster_img) {
+                console.error("Hình ảnh mô hình không có sẵn.");
+            } else {
+                var modelImg = document.createElement("img");
+                modelImg.src = response.cluster_img;
+                modelImg.className = "result-img";
+                imagesDiv.appendChild(modelImg);
+            }
+        }
+
+
+      // Display the charts: Amount, Frequency, Recency
+      var amountImg = document.createElement("img");
+      amountImg.src = response.amount_img;
+      amountImg.className = "result-img";
+      imagesDiv.appendChild(amountImg);
+
+      var freqImg = document.createElement("img");
+      freqImg.src = response.freq_img;
+      freqImg.className = "result-img";
+      imagesDiv.appendChild(freqImg);
+
+      var recencyImg = document.createElement("img");
+      recencyImg.src = response.recency_img;
+      recencyImg.className = "result-img";
+      imagesDiv.appendChild(recencyImg);
+
+      spinner.style.display = "none";
+
+      // Append images and description to the results section
+      document.getElementById("results").appendChild(imagesDiv);
+
+      // Cluster analysis section
+      var analysisDiv = document.createElement("div");
+      analysisDiv.className = "container";
+
+      var clusterAnalysis = JSON.parse(response.cluster_analysis);
+      clusterAnalysis.forEach(function(cluster) {
+        var clusterDiv = document.createElement("div");
+        clusterDiv.className = "cluster";
+        var clusterInfo = `
+          <h3>Nhóm ${cluster.Cluster_Id}</h3>
+          <p><strong>Chi Tiêu Trung Bình:</strong> ${cluster.Avg_Amount}</p>
+          <p><strong>Tần Suất Giao Dịch:</strong> ${cluster.Avg_Frequency}</p>
+          <p><strong>Ngày Mua Sắm Gần Nhất:</strong> ${cluster.Avg_Recency}</p>
+          <p><strong>Phân Tích:</strong> ${cluster.Group_Description}</p>
+        `;
+        clusterDiv.innerHTML = clusterInfo;
+        analysisDiv.appendChild(clusterDiv);
+      });
+
+      document.getElementById("results").appendChild(analysisDiv);
+    }
+  };
+}
+
+
+    // Mở Modal
+document.getElementById("openModalBtn").onclick = function() {
+  document.getElementById("newCustomerModal").style.display = "block";
+}
+
+// Đóng Modal khi nhấn nút "×"
+document.getElementsByClassName("close-btn")[0].onclick = function() {
+  document.getElementById("newCustomerModal").style.display = "none";
+}
+
+// Lưu thông tin khách hàng và gửi yêu cầu phân nhóm
+document.getElementById("new-customer-form").onsubmit = function(event) {
+  event.preventDefault();
+
+  // Lấy thông tin từ form
+  var customerId = document.getElementById("new-customer-id").value;
+  var recency = document.getElementById("new-customer-recency").value;
+  var frequency = document.getElementById("new-customer-frequency").value;
+  var monetary = document.getElementById("new-customer-monetary").value;
+
+  var formData = new FormData();
+  formData.append("customer_id", customerId);
+  formData.append("recency", recency);
+  formData.append("frequency", frequency);
+  formData.append("monetary", monetary);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "/add_customer");  // Địa chỉ API thêm khách hàng
+  xhr.send(formData);
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      alert("Khách hàng đã được thêm thành công!");
+      document.getElementById("newCustomerModal").style.display = "none";
+      updateClustering();  // Phân nhóm lại sau khi thêm khách hàng mới
+    }
+  };
+}
+
+// Cập nhật phân nhóm sau khi thêm khách hàng
+function updateClustering() {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "/recluster", true);  // Địa chỉ API phân nhóm lại
+  xhr.send();
+
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+      var response = JSON.parse(xhr.responseText);
+      // Cập nhật kết quả phân nhóm trên giao diện
+      document.getElementById("results").innerHTML = response.result;
+    }
+  };
+}
+  </script>
+
+</body>
+</html>

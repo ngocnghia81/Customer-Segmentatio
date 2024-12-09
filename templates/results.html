@@ -1,0 +1,25 @@
+<div>
+    <h3>Phân tích các nhóm:</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Nhóm</th>
+                <th>Chi tiêu Trung Bình</th>
+                <th>Chi tiêu Tổng</th>
+                <th>Tần Suất Giao Dịch Trung Bình</th>
+                <th>Ngày Mua Sắm Gần Nhất</th>
+                <th>Phân tích</th>
+            </tr>
+        </thead>
+        <tbody id="cluster-analysis">
+            <!-- Các dữ liệu phân tích nhóm sẽ được chèn vào đây -->
+        </tbody>
+    </table>
+</div>
+
+<div>
+    <h3>Biểu đồ Phân Tích:</h3>
+    <img src="{{ url_for('static', filename=amount_img) }}" alt="Phân Tích Số Tiền">
+    <img src="{{ url_for('static', filename=freq_img) }}" alt="Phân Tích Tần Suất">
+    <img src="{{ url_for('static', filename=recency_img) }}" alt="Phân Tích Ngày Mua">
+</div>
