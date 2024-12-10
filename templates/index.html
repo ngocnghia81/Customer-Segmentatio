@@ -118,12 +118,41 @@
       margin: 10px;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
+#modalImage {
+    max-width: 95%;
+    max-height: 95%;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+    transform: scale(1.5);
+    opacity: 1;
+}
+#imageModal img {
+  animation: zoomIn 0.3s ease-in-out forwards;
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1.5);
+    opacity: 1;
+  }
+}
+
+
   </style>
 </head>
 <body>
 
   <h1>Phân Nhóm Khách Hàng - WebApp</h1>
 
+<!-- Modal để phóng to hình ảnh -->
+<div id="imageModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000;">
+  <img id="modalImage" style="max-width: 90%; max-height: 90%; border-radius: 5px; box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);" alt="img">
+  <span id="closeModal" style="position: absolute; top: 20px; right: 20px; font-size: 30px; color: white; cursor: pointer;">&times;</span>
+</div>
 
   <form id="upload-form" onsubmit="handleSubmit(event)">
     <label for="file-upload">Tải lên file CSV:</label>
@@ -146,6 +175,30 @@
   <div id="spinner" class="spinner"></div>
   <div id="results" class="results"></div>
   <script>
+
+      // Khi click vào hình ảnh
+document.addEventListener("click", function(event) {
+  if (event.target.classList.contains("result-img")) {
+    var modal = document.getElementById("imageModal");
+    var modalImg = document.getElementById("modalImage");
+
+    modalImg.src = event.target.src; // Lấy nguồn ảnh từ hình ảnh được click
+    modal.style.display = "flex"; // Hiển thị modal
+  }
+});
+
+// Khi click vào nút đóng
+document.getElementById("closeModal").onclick = function() {
+  document.getElementById("imageModal").style.display = "none";
+};
+
+// Khi click ra ngoài modal, cũng đóng modal
+document.getElementById("imageModal").onclick = function(event) {
+  if (event.target === this) {
+    this.style.display = "none";
+  }
+};
+
 
       document.getElementById('method').addEventListener('change', function() {
     var method = this.value;

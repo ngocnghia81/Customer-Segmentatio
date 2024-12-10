@@ -307,7 +307,7 @@ def predict():
         elif method == 'optimal':
             kmeans = KMeans(n_clusters=optimal_k, random_state=42)
             clusters = kmeans.fit_predict(rfm_df_scaled)
-            cluster_description = (f"Số cụm tối ưu theo phương pháp {m} tối ưu nhat là {silhouette_k}. Đã sử dụng"
+            cluster_description = (f"Số cụm tối ưu theo phương pháp {m} tối ưu nhat là {optimal_k}. Đã sử dụng"
                                    f" {optimal_k} cụm để phân nhóm khách hàng.")
             if m == 'elbow':
                 img_path = elbow_img
